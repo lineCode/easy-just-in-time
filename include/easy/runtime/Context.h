@@ -11,6 +11,8 @@
 
 namespace easy {
 
+typedef void* layout_id;
+
 struct ArgumentBase {
 
   enum ArgumentKind {
@@ -78,6 +80,7 @@ DeclareArgument(Module, easy::Function const&);
 class StructArgument
     : public ArgumentBase {
   std::vector<char> Data_;
+
   public:
   StructArgument(const char* Str, size_t Size)
     : ArgumentBase(), Data_(Str, Str+Size) {};
@@ -108,6 +111,11 @@ class Context {
   unsigned OptLevel_ = 2, OptSize_ = 0;
   std::string DebugFile_;
 
+  // describes how the arguments of the function are passed
+  //  struct arguments can be packed in a single int, or passed field by field,
+  //  keep track of how many arguments a parameter takes
+  std::vector<layout_id> ArgumentLayout_;
+
   template<class ArgTy, class ... Args>
   inline Context& setArg(Args && ... args) {
     ArgumentMapping_.emplace_back(new ArgTy(std::forward<Args>(args)...));
@@ -127,6 +135,11 @@ class Context {
   Context& setParameterPointer(void const*);
   Context& setParameterStruct(char const*, size_t);
   Context& setParameterModule(easy::Function const&);
+
+  Context& setArgumentLayout(layout_id id) {
+    ArgumentLayout_.push_back(id); // each layout id is associated with a number of fields in the bitcode tracker
+    return *this;
+  }
 
   template<class T>
   Context& setParameterTypedPointer(T* ptr) {

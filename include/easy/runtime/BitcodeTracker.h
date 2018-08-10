@@ -5,6 +5,8 @@
 #include <llvm/IR/Module.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 
+#include <easy/param.h>
+
 #include <unordered_map>
 #include <memory>
 
@@ -26,17 +28,28 @@ struct FunctionInfo {
   { }
 };
 
+struct LayoutInfo {
+  size_t NumFields;
+};
+
 class BitcodeTracker {
 
   // map function to all the info required for jit compilation
   std::unordered_map<void*, FunctionInfo> Functions;
   std::unordered_map<std::string, void*> NameToAddress;
 
+  // map the addresses of the layout_id with the number of parameters
+  std::unordered_map<void*, LayoutInfo> Layouts;
+
   public:
 
   void registerFunction(void* FPtr, const char* Name, GlobalMapping* Globals, const char* Bitcode, size_t BitcodeLen) {
     Functions.emplace(FPtr, FunctionInfo{Name, Globals, Bitcode, BitcodeLen});
     NameToAddress.emplace(Name, FPtr);
+  }
+
+  void registerLayout(layout_id Id, size_t N) {
+    Layouts.emplace(Id, LayoutInfo{N});
   }
 
   void* getAddress(std::string const &Name);

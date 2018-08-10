@@ -71,5 +71,8 @@ extern "C" {
 void easy_register(void* FPtr, const char* Name, GlobalMapping* Globals, const char* Bitcode, size_t BitcodeLen) {
   BitcodeTracker::GetTracker().registerFunction(FPtr, Name, Globals, Bitcode, BitcodeLen);
 }
+void easy_register_layout(layout_id Id, size_t N) {
+  BitcodeTracker::GetTracker().registerLayout(Id, N);
+}
 }
 

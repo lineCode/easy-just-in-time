@@ -5,8 +5,32 @@
 #include <easy/function_wrapper.h>
 #include <easy/options.h>
 #include <easy/meta.h>
+#include <easy/attributes.h>
 
 namespace easy {
+
+namespace layout {
+
+  // the address of this function is used as id :)
+  template<class Arg>
+  void  __layout_id(Arg) { return; }
+
+  template<class Arg>
+  layout_id  __attribute__((noinline)) EASY_JIT_LAYOUT get_layout() {
+    // horrible hack to get the ptr of get_struct_layout_internal<Arg> as void*
+    union {
+      void* as_void_ptr;
+      void(*as_fun_ptr)(Arg);
+    } dummy;
+    dummy.as_fun_ptr = __layout_id<Arg>;
+    return dummy.as_void_ptr;
+  }
+
+  template<class Arg>
+  void set_layout(easy::Context &C) {
+    C.setArgumentLayout(get_layout<Arg>());
+  }
+}
 
 namespace  {
 
@@ -125,6 +149,7 @@ set_parameters(ParameterList,
   using Param0 = typename ParameterList::head;
   using ParametersTail = typename ParameterList::tail;
 
+  layout::set_layout<Param0>(C);
   set_parameter<Param0, Arg0>::help::template set_param<Param0, Arg0>(C, std::forward<Arg0>(arg0));
   set_parameters<ParametersTail, Args&&...>(ParametersTail(), C, std::forward<Args>(args)...);
 }
